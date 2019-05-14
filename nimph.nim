@@ -1,9 +1,8 @@
 # Author: Jacob McBlane
 # gopher.silentmessengers.org
-# Version: 0.0.35
+# Version: 0.0.4
 #
 # Depends upon:
-#           * curl
 #           * fold
 # These should be already installed on any linux system.
 # Customize the variables on lines ~33 to fit your needs.
@@ -18,7 +17,7 @@
 #       - Would like the image program to be asynchronous.
 #       - Check for uri type when loading initial uri. (Partially in)
 #       - Open current directory in pager
-#       - Remove curl and fold dependencies (pure nim)
+#       - Remove fold dependency (striving toward pure nim)
 
 import os, osproc, re, browsers
 import md5, parseutils, strutils
@@ -53,16 +52,16 @@ proc type_uri(uri: string): char =
   else: return '1'
 
 proc dl_uri(uri: string, filename: string): string =
+  let split = uri.split("/")
   let file = tmpdir & filename
+  var socket = newSocket()
+  socket.connect(split[0], Port(70)) # Varying ports necessary?
   case type_uri(uri):
     of '0', '1', '7':
-      let split = uri.split("/")
-      var socket = newSocket()
-      socket.connect(split[0], Port(70)) # Varying ports necessary?
       if split.len() > 2:
-        socket.send("/" & split[2..high(split)].join("/"))
+        socket.send("/" & split[2..high(split)].join("/") & "\r\L")
       else:
-        socket.send("/")
+        socket.send("/\r\L")
       var get_lines: seq[string]
       if fileExists(file) == false:
         history.add(uri)
@@ -78,9 +77,13 @@ proc dl_uri(uri: string, filename: string): string =
           return "nothing"
       return file
     of 'I', 'g', '9':
-      let prefix = "gopher://" & uri
       if fileExists(file) == false:
-        discard execShellCmd("curl -s --connect-timeout 10 \"" & prefix & "\" --output " & file)
+        socket.send("/" & split[2..high(split)].join("/") & "\r\L")
+        file.writeFile(socket.recv(size = 10000000, timeout = 10000))
+          # Ugh, I don't like having to specify the size... but I
+          # don't know a way around this. I just threw in something
+          # arbitrary that should be high enough to receive most things.
+          # Let me know if you run into any trouble.
       return file
     else:
       return "nothing"
@@ -102,7 +105,7 @@ proc get_dir(uri: string): seq[seq[string]] =
             @["i", "", "", "Err", ""],
             @["i", "Couldn't navigate to " & uri, "", "Err", ""],
             @["i", "", "", "Err", ""],
-            @["i", "Looks like curl timed out or something.", "", "Err", ""],
+            @["i", "Looks like the request timed out or something.", "", "Err", ""],
             @["i", "", "", "Err", ""],
             @["1", "    Visit gopher.silentmessengers.org", "/", "gopher.silentmessengers.org", "70"],
             @["7", "    Search w/ Veronica II", "/v2/vs", "gopher.floodgap.com", "70"],
