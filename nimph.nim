@@ -18,9 +18,11 @@
 #       - Would like the image program to be asynchronous.
 #       - Check for uri type when loading initial uri. (Partially in)
 #       - Open current directory in pager
+#       - Remove curl and fold dependencies (pure nim)
 
-import os, osproc, re
+import os, osproc, re, browsers
 import md5, parseutils, strutils
+import net, sequtils
 
 var
  tour = newSeq[string]()
@@ -34,7 +36,6 @@ let
  bookmarks = getHomeDir() & ".config/nimphmarks"
  pager = "$PAGER"
  img_app = "sxiv -a"
- browser = "$BROWSER"
  fold_width = "65"
 
 if dirExists(tmpdir) == false:
@@ -53,11 +54,36 @@ proc type_uri(uri: string): char =
 
 proc dl_uri(uri: string, filename: string): string =
   let file = tmpdir & filename
-  if fileExists(file) == false:
-    history.add(uri)
-    let prefix = "gopher://" & uri
-    discard execShellCmd("curl -s --connect-timeout 10 \"" & prefix & "\" --output " & file)
-  return file
+  case type_uri(uri):
+    of '0', '1', '7':
+      let split = uri.split("/")
+      var socket = newSocket()
+      socket.connect(split[0], Port(70)) # Varying ports necessary?
+      if split.len() > 2:
+        socket.send("/" & split[2..high(split)].join("/"))
+      else:
+        socket.send("/")
+      var get_lines: seq[string]
+      if fileExists(file) == false:
+        history.add(uri)
+        try:
+          while true:
+            let line = socket.recvLine(timeout = 10000)
+            if line != "":
+              get_lines.add(line)
+            else:
+              break
+          writeFile(file, get_lines.join("\n"))
+        except:
+          return "nothing"
+      return file
+    of 'I', 'g', '9':
+      let prefix = "gopher://" & uri
+      if fileExists(file) == false:
+        discard execShellCmd("curl -s --connect-timeout 10 \"" & prefix & "\" --output " & file)
+      return file
+    else:
+      return "nothing"
 
 proc cache_uri(uri: string): string =
   let md5 = getMD5(uri)
@@ -182,7 +208,7 @@ proc main_loop(uri: string) =
         echo "Downloaded to ", file
       of "h":
         let link = dira[y][2][4..high(dira[y][2])]
-        discard execShellCmd(browser & " " & link)
+        openDefaultBrowser(link)
       of "I", "g":
         discard get_image(newuri)
     else:
