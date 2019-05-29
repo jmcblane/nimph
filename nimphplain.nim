@@ -32,14 +32,14 @@ let
  pager = "$PAGER"
  # img_app = "sxiv -a"
  fold_width = 65
- www = " 爵 "
- txt = "   "
- dir = "   "
- err = "   "
- fts = "   "
- tel = "   "
- bin = "   "
- img = "   "
+ www = " @ "
+ txt = " # "
+ dir = " / "
+ err = " ! "
+ fts = " ? "
+ tel = " > "
+ bin = " $ "
+ img = " % "
 
 type Line = tuple[
   kind: string,
