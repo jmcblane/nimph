@@ -1,6 +1,6 @@
 # Author: Jacob McBlane
-# gopher.silentmessengers.org
-# Version: 0.0.7
+# silentmessengers.org
+# Version: 0.0.8
 #
 # Customize the variables on lines ~30 to fit your needs.
 #
@@ -26,7 +26,7 @@ from md5 import getMD5
 from re import findAll, re, match
 
 let
- home = "gopher.silentmessengers.org"
+ home = "silentmessengers.org"
  tmpdir = "/tmp/nimph/"
  bookmarks = getHomeDir() & ".config/nimphmarks"
  pager = "$PAGER"
@@ -61,7 +61,7 @@ let errorpage: Hole =
     ("i", "", "", "Err", ""),
     ("i", "Looks like the request timed out or something.", "", "Err", ""),
     ("i", "", "", "Err", ""),
-    ("1", "    Visit gopher.silentmessengers.org", "/", "gopher.silentmessengers.org", "70"),
+    ("1", "    Visit silentmessengers.org", "/", "silentmessengers.org", "70"),
     ("7", "    Search w/ Veronica II", "/v2/vs", "gopher.floodgap.com", "70"),
     ("i", "", "", "Err", ""),
     ("i", "", "", "Err", "")]
@@ -70,7 +70,7 @@ var
  tour = newSeq[string]()
  nav = newSeq[string]()
  history = newSeq[string]()
- auto_page = true
+ auto_page = false
 
 if dirExists(tmpdir) == false:
   createDir(tmpdir)
@@ -122,11 +122,12 @@ proc dl_uri(uri: string, filename: string, port = 70): string =
     of 'I', 'g', '9':
       if fileExists(file) == false:
         socket.send("/" & split[2..^1].join("/") & "\r\L")
-        file.writeFile(socket.recv(size = 10000000, timeout = 30000))
-          # Ugh, I don't like having to specify the size... but I
-          # don't know a way around this. I just threw in something
-          # arbitrary that should be high enough to receive most things.
-          # Let me know if you run into any trouble.
+        let f = open(file, fmAppend)
+        defer: f.close()
+        while true:
+          let s = socket.recv(size = 4000)
+          if s != "": f.write(s)
+          else: break
       return file
     else: return "Nothing"
 
@@ -181,8 +182,8 @@ proc print_dir(dira: Hole, info: bool, uri: string, page: bool = false) =
   stdout.write("\n\n")
 
   if page == false:
-    var c = 1
-    for i in dira[1..^1]:
+    var c = 0
+    for i in dira[0..^1]:
       process_line(i, c)
       c += 1
   else:
