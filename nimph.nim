@@ -1,14 +1,14 @@
-# Author: Jacob McBlane
+# Jacob McBlane <jacobmcblane@gmail.com>
 # silentmessengers.org
-# Version: 0.0.8
+# Version: 0.0.82
 #
 # Customize the variables on lines ~30 to fit your needs.
 #
-# Report any bugs to me. Contact info at my gopherhole.
+# Report any bugs or comments to me, please!
 # Note: There are surely bugs!
 #
 # Launch the app and type help for instructions.
-# 
+#
 # TODO: - Add more safety!
 #       - Check for uri type when loading initial uri. (Partially in)
 #       - Open current directory in pager
@@ -30,8 +30,8 @@ let
  tmpdir = "/tmp/nimph/"
  bookmarks = getHomeDir() & ".config/nimphmarks"
  pager = "$PAGER"
- # img_app = "sxiv -a"
- fold_width = 65
+
+ # Fancy characters
  www = " 爵 "
  txt = "   "
  dir = "   "
@@ -40,6 +40,16 @@ let
  tel = "   "
  bin = "   "
  img = "   "
+
+ # Some plain character suggestions
+# www = " @ "
+# txt = " # "
+# dir = " / "
+# err = " ! "
+# fts = " ? "
+# tel = " > "
+# bin = " $ "
+# img = " % "
 
 type Line = tuple[
   kind: string,
@@ -96,8 +106,11 @@ proc type_uri(uri: string): char =
 
 proc dl_uri(uri: string, filename: string, port = 70): string =
   let split = uri.split("/")
-  let file = tmpdir & filename
   var socket = newSocket()
+  # let file = tmpdir & filename
+  var file: string
+  if filename.match(re"^##") == true: file = getHomeDir() & filename[2..^1]
+  else: file = tmpdir & filename
 
   try: socket.connect(split[0], Port(port)) # Varying ports necessary?
   except: return "Nothing"
@@ -143,8 +156,8 @@ proc get_dir(uri: string, port = 70): Hole =
     return errorpage
   else:
     let ls = readFile(dir).splitLines()
-    var dira: Hole
-    dira.add(("i", "", "", "(NULL)", ""))
+    # var dira: Hole
+    result.add(("i", "", "", "(NULL)", ""))
     var c = 1
     for i in ls:
       var lsa: Line
@@ -173,13 +186,6 @@ proc print_dir(dira: Hole, info: bool, uri: string, page: bool = false) =
     of "I": echo "\e[1;1m", c, "\e[1;36m", img, l.text, "\e[0m"
     of "g": echo "\e[1;1m", c, "\e[1;36m", img, l.text, "\e[0m"
     else: echo "  ??  ", l.text
-
-  echo "\e[1;33m", uri, "\e[0m"
-  var len_c = 0
-  while len_c < uri.len():
-    stdout.write "-"
-    len_c += 1
-  stdout.write("\n\n")
 
   if page == false:
     var c = 0
@@ -211,6 +217,18 @@ proc do_file(dira: Hole, num: string): string =
   let link = line.domain & "/" & line.kind & line.path
   result = cache_uri(link, line.port.parseInt())
 
+proc pipe_or_dl(uri: string, port: int): void =
+  stdout.write("Pipe? y/n: ")
+  let ans = readLine(stdin)
+  if ans == "y" or ans == "yes":
+    stdout.write("To what? ")
+    let pipeto = readLine(stdin)
+    discard execShellCmd(pipeto & " " & cache_uri(uri, port))
+  else:
+    stdout.write("Enter a filename: ")
+    let f = "##" & readLine(stdin)
+    echo "Downloaded to ", dl_uri(uri, f, port)
+
 proc main_loop(uri: string, port = 70) =
   var dira: Hole
 
@@ -222,25 +240,22 @@ proc main_loop(uri: string, port = 70) =
       let newuri = uri.split("/")[0..^2].join("/")
       dira = get_dir(newuri, port)
     else: print_dir(errorpage, true, uri)
-  of '9', 'I', 'g':
-    stdout.write("Enter a filename:")
-    let f = readLine(stdin)
-    echo "Saved to: " & dl_uri(uri, f, port)
-    let newuri = uri.split("/")[0..^2].join("/")
-    dira = get_dir(newuri, port)
+  of '9', 'I', 'g': pipe_or_dl(uri, port)
   else:
     dira = get_dir(uri, port)
     print_dir(dira, true, uri, auto_page)
 
   while true:
-    stdout.write("> ")
+    echo "\n\e[33m=== " & uri & " ==="
+    stdout.write(">\e[0m ")
     let x = readLine(stdin).split()
     var y: int
     discard parseInt(x[0], y)
 
     if y > 0 and y <= dira.len():
-      let newuri = dira[y].domain & "/" & dira[y].kind & dira[y].path
-      let newport = dira[y].port.parseInt()
+      let
+        newuri = dira[y].domain & "/" & dira[y].kind & dira[y].path
+        newport = dira[y].port.parseInt()
       case dira[y].kind
       of "0":
         let file = cache_uri(newuri, newport)
@@ -261,12 +276,8 @@ proc main_loop(uri: string, port = 70) =
         let path = dira[y].domain & " " & dira[y].port
         echo "Telnet: ", path
         # discard execShellCmd("telnet " & path) # Alternative
-      of "9", "I", "g":
-        stdout.write("Enter a filename: ")
-        let f = readLine(stdin)
-        echo "Downloaded to ", dl_uri(newuri, f, newport)
+      of "9", "I", "g": pipe_or_dl(newuri, newport)
       of "h": openDefaultBrowser(dira[y].path[4..^1])
-      # of "I", "g": discard execShellCmd(img_app & " " & cache_uri(newuri, newport)) ##Dropped in favor of downloading the image.
     else:
       case x[0]
       of "go":
@@ -360,9 +371,7 @@ proc main_loop(uri: string, port = 70) =
           discard parseInt(x[1], y)
           if y > 0 and y < dira.len():
             let newuri = dira[y].domain & "/" & dira[y].kind & dira[y].path
-            stdout.write("Enter a filename: ")
-            let name = readLine(stdin)
-            echo "Saved to " & dl_uri(newuri, name, dira[y].port.parseInt())
+            pipe_or_dl(newuri, dira[y].port.parseInt())
       of "autopage":
         auto_page = not auto_page
       of "clean":
