@@ -23,9 +23,7 @@ from sequtils import delete
 from strutils import strip, join, split, splitLines, parseInt
 from md5 import getMD5
 from re import findAll, re, match
-import prompt
 
-var main_prompt = Prompt.init("> ")
 let
   home = "silentmessengers.org"
   tmpdir = "/tmp/nimph/"
@@ -42,15 +40,14 @@ let
   img = "   "
 
   # Some plain character suggestions
-# www = " @ "
-# txt = " # "
-# dir = " / "
-# err = " ! "
-# fts = " ? "
-# tel = " > "
-# bin = " $ "
-# img = " % "
-
+#  www = " @ "
+#  txt = " # "
+#  dir = " / "
+#  err = " ! "
+#  fts = " ? "
+#  tel = " > "
+#  bin = " $ "
+#  img = " % "
 
 type Line = tuple[
   kind: string,
@@ -248,9 +245,8 @@ proc main_loop(uri: string, port = 70) =
 
   while true:
     echo "\n\e[33m=== " & uri & " ==="
-    # stdout.write(">\e[0m ")
-    # let x = readLine(stdin).split()
-    let x = main_prompt.readline().split()
+    stdout.write("\e[33m>\e[0m ")
+    let x = readLine(stdin).split()
     var y: int
     discard parseInt(x[0], y)
 
