@@ -11,7 +11,6 @@
 #
 # TODO: - Add more safety!
 #       - Check for uri type when loading initial uri. (Partially in)
-#       - Open current directory in pager
 #       - Dynamic ports? See proc dl_uri
 #       - Remove $PAGER dependency for pure Nim.
 
@@ -29,11 +28,10 @@ let
  home = "silentmessengers.org"
  tmpdir = "/tmp/nimph/"
  bookmarks = getHomeDir() & ".config/nimphmarks"
- pager = "$PAGER"
 
  # Fancy characters
- www = " 爵 "
- txt = "   "
+# www = " 爵 "
+# txt = "   "
  dir = "   "
  err = "   "
  fts = "   "
@@ -41,17 +39,17 @@ let
  bin = "   "
  img = "   "
 
- # Some plain character suggestions
-# www = " @ "
-# txt = " # "
+  Some plain character suggestions
+ www = " @ "
+ txt = " # "
 # dir = " / "
 # err = " ! "
 # fts = " ? "
 # tel = " > "
 # bin = " $ "
 # img = " % "
-
-type Line = tuple[
+#
+#type Line = tuple[
   kind: string,
   text: string,
   path: string,
@@ -219,8 +217,8 @@ proc do_file(dira: Hole, num: string): string =
 
 proc pipe_or_dl(uri: string, port: int): void =
   stdout.write("Pipe? y/n: ")
-  let ans = readLine(stdin)
-  if ans == "y" or ans == "yes":
+  let ans = getch()
+  if ans == 'y':
     stdout.write("To what? ")
     let pipeto = readLine(stdin)
     discard execShellCmd(pipeto & " " & cache_uri(uri, port))
@@ -262,7 +260,7 @@ proc main_loop(uri: string, port = 70) =
         if file != "Nothing":
           let text = readFile(file)
           if text.split("\n").len() > terminalHeight():
-            discard execShellCmd(pager & " " & file)
+            discard execShellCmd("$PAGER " & file)
           else: echo text
         else: print_dir(errorpage, true, uri)
       of "1": main_loop(newuri, newport)
@@ -294,9 +292,8 @@ proc main_loop(uri: string, port = 70) =
           let file = do_file(dira, x[1])
           echo readFile(file).re_wrap
       of "less":
-        # Make this able to open the current dir in less
         if x.len() > 1:
-          discard execShellCmd(pager & " " & do_file(dira, x[1]))
+          discard execShellCmd("$PAGER " & do_file(dira, x[1]))
       of "b", "back":
         if nav.len() > 1:
           discard nav.pop()
@@ -386,88 +383,71 @@ proc main_loop(uri: string, port = 70) =
           of "go":
             echo "\e[1;31m", "go [url]"
             echo "\e[1;37m", "navigates to the specified url."
-            stdout.write("\e[0m")
           of "ls":
             echo "\e[1;31m", "ls"
             echo "\e[1;37m", "Prints current directory's links without info lines"
-            stdout.write("\e[0m")
           of "cat":
             echo "\e[1;31m", "cat [number]"
             echo "\e[1;37m", "cat without a number will reprint the current uri."
             echo "\e[1;37m", "pass a number with the command to print the specified uri."
-            stdout.write("\e[0m")
           of "fold":
             echo "\e[1;31m", "fold [number]"
             echo "\e[1;37m", "Will print the specified uri, but folded."
-            stdout.write("\e[0m")
           of "less":
             echo "\e[1;31m", "less [number]"
             echo "\e[1;37m", "Opens the specified uri in your pager."
-            stdout.write("\e[0m")
           of "more":
             echo "\e[1;31m", "more"
             echo "\e[1;37m", "Prints the dir page by page."
             echo "\e[1;37m", "q to stop."
-            stdout.write("\e[0m")
           of "back":
             echo "\e[1;31m", "b, back"
             echo "\e[1;37m", "Goes to the previous directory."
-            stdout.write("\e[0m")
           of "history":
             echo "\e[1;31m", "h, hist, history"
             echo "\e[1;37m", "Shows where you've been this session."
-            stdout.write("\e[0m")
           of "home":
             echo "\e[1;31m", "home"
             echo "\e[1;37m", "Goes directly to whatever you have set for home."
-            stdout.write("\e[0m")
           of "search":
             echo "\e[1;31m", "search"
             echo "\e[1;37m", "Prompts for a search query, and searches using Veronica II."
-            stdout.write("\e[0m")
           of "url":
             echo "\e[1;31m", "url [number]"
             echo "\e[1;37m", "No number will print the current uri."
             echo "\e[1;37m", "Give it a number to see the uri of any reference."
-            stdout.write("\e[0m")
           of "up":
             echo "\e[1;31m", "up"
             echo "\e[1;37m", "Goes up one directory."
             echo "\e[1;37m", "i.e. some.gopherhole/1/dir/thing -> some.gopherhole/1/dir"
-            stdout.write("\e[0m")
           of "tour":
             echo "\e[1;31m", "tour [number] [..number]"
             echo "\e[1;37m", "Add references to your tour list."
             echo "\e[1;37m", "Use the next command to navigate them one at a time."
             echo "\e[1;37m", "Accepts one number, multiple numbers, or ranges (i.e. 1-3)"
-            stdout.write("\e[0m")
           of "next":
             echo "\e[1;31m", "n, next"
             echo "\e[1;37m", "Goes to the next item in the tour list."
-            stdout.write("\e[0m")
           of "add":
             echo "\e[1;31m", "add [...number]"
             echo "\e[1;37m", "Add current uri to bookmarks, or add numbered uri."
-            stdout.write("\e[0m")
           of "marks":
             echo "\e[1;31m", "marks, bookmarks"
             echo "\e[1;37m", "Display a list of your bookmarks."
-            stdout.write("\e[0m")
           of "clean":
             echo "\e[1;31m", "clean"
             echo "\e[1;37m", "Clears the cache directory."
-            stdout.write("\e[0m")
           of "quit":
             echo "\e[1;31m", "q, quit, exit"
             echo "\e[1;37m", "Exit the application."
-            stdout.write("\e[0m")
           else: echo "No documentation for that."
+          stdout.write("\e[0m")
         else:
           echo "\e[1;33m", "Type a number to navigate to that uri.\n"
           echo "\e[1;31m", "Quick reference:"
           echo "\e[1;37m", "go, ls, cat, fold, more, less, back, history, home"
           echo "\e[1;37m", "add, bookmarks, search, url, up, tour, next, clean\nquit\n"
-          echo "\e[1;36m", "Type help (command) for more information.", "\e[0m"
+          echo "\e[1;36m", "Type help (command) for more information."
           echo "\e[1;36m", "Toggle auto_paging with 'autopage'", "\e[0m"
 
 if paramCount() > 0: main_loop(paramStr(1))
