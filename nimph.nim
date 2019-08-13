@@ -1,6 +1,6 @@
 # Jacob McBlane <jacobmcblane@gmail.com>
 # silentmessengers.org
-# Version: 0.0.82
+# Version: 0.0.85
 #
 # Customize the variables on lines ~30 to fit your needs.
 #
@@ -223,9 +223,13 @@ proc pipe_or_dl(uri: string, port: int): void =
     let pipeto = readLine(stdin)
     discard execShellCmd(pipeto & " " & cache_uri(uri, port))
   else:
-    stdout.write("Enter a filename: ")
-    let f = "##" & readLine(stdin)
-    echo "Downloaded to ", dl_uri(uri, f, port)
+    echo "Downloading..."
+    let
+      name = uri.split("/")[^1]
+      f = "##" & uri.split("/")[^1]
+    if fileExists(getHomeDir() & name) == false:
+      echo "Downloaded to ", dl_uri(uri, f, port)
+    else: echo "Error. File already exists."
 
 proc main_loop(uri: string, port = 70) =
   var dira: Hole
