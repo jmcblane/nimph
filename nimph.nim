@@ -69,7 +69,7 @@ let errorpage: Hole =
     ("i", "", "", "Err", ""),
     ("i", "Looks like the request timed out or something.", "", "Err", ""),
     ("i", "", "", "Err", ""),
-    ("1", "    Visit silentmessengers.org", "/", "silentmessengers.org", "70"),
+    ("1", "    Visit " & home, "/", home, "70"),
     ("7", "    Search w/ Veronica II", "/v2/vs", "gopher.floodgap.com", "70"),
     ("i", "", "", "Err", ""),
     ("i", "", "", "Err", "")]
