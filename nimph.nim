@@ -22,7 +22,7 @@ from parseutils import parseInt
 from sequtils import delete
 from strutils import strip, join, split, splitLines, parseInt
 from md5 import getMD5
-from re import findAll, re, match
+from re import findAll, re, match, replace
 
 let
   home = "silentmessengers.org"
@@ -105,7 +105,6 @@ proc type_uri(uri: string): char =
 proc dl_uri(uri: string, filename: string, port = 70): string =
   let split = uri.split("/")
   var socket = newSocket()
-  # let file = tmpdir & filename
   var file: string
   if filename.match(re"^##") == true: file = getHomeDir() & filename[2..^1]
   else: file = tmpdir & filename
@@ -146,6 +145,22 @@ proc cache_uri(uri: string, port = 70): string =
   let md5 = getMD5(uri)
   result = dl_uri(uri, md5, port)
 
+proc make_dir(file: string): Hole =
+  let ls = readFile(file).splitLines()
+  result.add(("i", "", "", "(NULL)", ""))
+  var c = 1
+  for i in ls:
+    var lsa: Line
+    let cols = i.split("\t")
+    if cols.len() > 3:
+      lsa.kind = $cols[0][0]
+      lsa.text = cols[0][1..^1]
+      lsa.path = cols[1]
+      lsa.domain = cols[2]
+      lsa.port = cols[3]
+      result.add(lsa)
+    c += 1
+
 proc get_dir(uri: string, port = 70): Hole =
   nav.add(uri)
   let dir = cache_uri(uri, port)
@@ -153,21 +168,7 @@ proc get_dir(uri: string, port = 70): Hole =
     discard nav.pop()
     return errorpage
   else:
-    let ls = readFile(dir).splitLines()
-    # var dira: Hole
-    result.add(("i", "", "", "(NULL)", ""))
-    var c = 1
-    for i in ls:
-      var lsa: Line
-      let cols = i.split("\t")
-      if cols.len() > 3:
-        lsa.kind = $cols[0][0]
-        lsa.text = cols[0][1..^1]
-        lsa.path = cols[1]
-        lsa.domain = cols[2]
-        lsa.port = cols[3]
-        result.add(lsa)
-      c += 1
+    result = make_dir(dir)
 
 proc print_dir(dira: Hole, info: bool, uri: string, page: bool = false) =
   proc process_line(l: Line, c: int) =
@@ -232,6 +233,7 @@ proc pipe_or_dl(uri: string, port: int): void =
     else: echo "Error. File already exists."
 
 proc main_loop(uri: string, port = 70) =
+  let uri = uri.replace(re"gopher://", "")
   var dira: Hole
 
   case type_uri(uri):
@@ -360,11 +362,21 @@ proc main_loop(uri: string, port = 70) =
           var y: int
           discard parseInt(x[1], y)
           if y > 0 and y < dira.len():
-            let newuri = dira[y].domain & "/" & dira[y].kind & dira[y].path
-            f.writeLine(newuri & " :: " & desc)
-        else: f.writeLine(uri & "  :: " & desc)
+            f.writeLine(dira[y].kind & desc & "\t" & dira[y].path & "\t" & dira[y].domain & "\t70")
+        else:
+          let uri_split = uri.split("/")
+          if uri_split.len > 2:
+            if uri_split[1] != "":
+              let
+                kind = uri_split[1]
+                path = uri_split[2..^1]
+              f.writeLine(kind & desc & "\t" & path & "\t" & uri_split[0] & "\t70")
+          else:
+            f.writeLine("1" & desc & "\t/\t" & uri_split[0] & "\t70")
       of "marks", "bookmarks":
-        if fileExists(bookmarks): echo readFile(bookmarks)
+        if fileExists(bookmarks):
+          dira = make_dir(bookmarks)
+          print_dir(dira, false, uri, auto_page)
         else: echo "No bookmarks."
       of "dl", "download":
         if x.len() > 1:
@@ -454,5 +466,5 @@ proc main_loop(uri: string, port = 70) =
           echo "\e[1;36m", "Type help (command) for more information."
           echo "\e[1;36m", "Toggle auto_paging with 'autopage'", "\e[0m"
 
-if paramCount() > 0: main_loop(paramStr(1))
+if paramCount() > 0: main_loop(paramStr(1).replace(re"gopher://", ""))
 else: main_loop(home)
