@@ -176,7 +176,7 @@ proc print_dir(dira: Hole, info: bool, uri: string, page: bool = false) =
     of "i":
       if info == true: echo "      ", l.text
     of "h": echo "\e[1;1m", c, "\e[1;32m", www, l.text, "\e[0m"
-    of "0": echo "\e[1;1m", c, "\e[1;37m", txt, l.text, "\e[0m"
+    of "0": echo "\e[1;1m", c, "\e[1;0m", txt, l.text, "\e[0m"
     of "1": echo "\e[1;1m", c, "\e[1;34m", dir, l.text, "\e[0m"
     of "3": echo "\e[1;1m", c, "\e[1;31m", err, l.text, "\e[0m"
     of "7": echo "\e[1;1m", c, "\e[1;33m", fts, l.text, "\e[0m"
@@ -398,71 +398,71 @@ proc main_loop(uri: string, port = 70) =
           case x[1]
           of "go":
             echo "\e[1;31m", "go [url]"
-            echo "\e[1;37m", "navigates to the specified url."
+            echo "\e[1;0m", "navigates to the specified url."
           of "ls":
             echo "\e[1;31m", "ls"
-            echo "\e[1;37m", "Prints current directory's links without info lines"
+            echo "\e[1;0m", "Prints current directory's links without info lines"
           of "cat":
             echo "\e[1;31m", "cat [number]"
-            echo "\e[1;37m", "cat without a number will reprint the current uri."
-            echo "\e[1;37m", "pass a number with the command to print the specified uri."
+            echo "\e[1;0m", "cat without a number will reprint the current uri."
+            echo "\e[1;0m", "pass a number with the command to print the specified uri."
           of "fold":
             echo "\e[1;31m", "fold [number]"
-            echo "\e[1;37m", "Will print the specified uri, but folded."
+            echo "\e[1;0m", "Will print the specified uri, but folded."
           of "less":
             echo "\e[1;31m", "less [number]"
-            echo "\e[1;37m", "Opens the specified uri in your pager."
+            echo "\e[1;0m", "Opens the specified uri in your pager."
           of "more":
             echo "\e[1;31m", "more"
-            echo "\e[1;37m", "Prints the dir page by page."
-            echo "\e[1;37m", "q to stop."
+            echo "\e[1;0m", "Prints the dir page by page."
+            echo "\e[1;0m", "q to stop."
           of "back":
             echo "\e[1;31m", "b, back"
-            echo "\e[1;37m", "Goes to the previous directory."
+            echo "\e[1;0m", "Goes to the previous directory."
           of "history":
             echo "\e[1;31m", "h, hist, history"
-            echo "\e[1;37m", "Shows where you've been this session."
+            echo "\e[1;0m", "Shows where you've been this session."
           of "home":
             echo "\e[1;31m", "home"
-            echo "\e[1;37m", "Goes directly to whatever you have set for home."
+            echo "\e[1;0m", "Goes directly to whatever you have set for home."
           of "search":
             echo "\e[1;31m", "search"
-            echo "\e[1;37m", "Prompts for a search query, and searches using Veronica II."
+            echo "\e[1;0m", "Prompts for a search query, and searches using Veronica II."
           of "url":
             echo "\e[1;31m", "url [number]"
-            echo "\e[1;37m", "No number will print the current uri."
-            echo "\e[1;37m", "Give it a number to see the uri of any reference."
+            echo "\e[1;0m", "No number will print the current uri."
+            echo "\e[1;0m", "Give it a number to see the uri of any reference."
           of "up":
             echo "\e[1;31m", "up"
-            echo "\e[1;37m", "Goes up one directory."
-            echo "\e[1;37m", "i.e. some.gopherhole/1/dir/thing -> some.gopherhole/1/dir"
+            echo "\e[1;0m", "Goes up one directory."
+            echo "\e[1;0m", "i.e. some.gopherhole/1/dir/thing -> some.gopherhole/1/dir"
           of "tour":
             echo "\e[1;31m", "tour [number] [..number]"
-            echo "\e[1;37m", "Add references to your tour list."
-            echo "\e[1;37m", "Use the next command to navigate them one at a time."
-            echo "\e[1;37m", "Accepts one number, multiple numbers, or ranges (i.e. 1-3)"
+            echo "\e[1;0m", "Add references to your tour list."
+            echo "\e[1;0m", "Use the next command to navigate them one at a time."
+            echo "\e[1;0m", "Accepts one number, multiple numbers, or ranges (i.e. 1-3)"
           of "next":
             echo "\e[1;31m", "n, next"
-            echo "\e[1;37m", "Goes to the next item in the tour list."
+            echo "\e[1;0m", "Goes to the next item in the tour list."
           of "add":
             echo "\e[1;31m", "add [...number]"
-            echo "\e[1;37m", "Add current uri to bookmarks, or add numbered uri."
+            echo "\e[1;0m", "Add current uri to bookmarks, or add numbered uri."
           of "marks":
             echo "\e[1;31m", "marks, bookmarks"
-            echo "\e[1;37m", "Display a list of your bookmarks."
+            echo "\e[1;0m", "Display a list of your bookmarks."
           of "clean":
             echo "\e[1;31m", "clean"
-            echo "\e[1;37m", "Clears the cache directory."
+            echo "\e[1;0m", "Clears the cache directory."
           of "quit":
             echo "\e[1;31m", "q, quit, exit"
-            echo "\e[1;37m", "Exit the application."
+            echo "\e[1;0m", "Exit the application."
           else: echo "No documentation for that."
           stdout.write("\e[0m")
         else:
           echo "\e[1;33m", "Type a number to navigate to that uri.\n"
           echo "\e[1;31m", "Quick reference:"
-          echo "\e[1;37m", "go, ls, cat, fold, more, less, back, history, home"
-          echo "\e[1;37m", "add, bookmarks, search, url, up, tour, next, clean\nquit\n"
+          echo "\e[1;0m", "go, ls, cat, fold, more, less, back, history, home"
+          echo "\e[1;0m", "add, bookmarks, search, url, up, tour, next, clean\nquit\n"
           echo "\e[1;36m", "Type help (command) for more information."
           echo "\e[1;36m", "Toggle auto_paging with 'autopage'", "\e[0m"
 
