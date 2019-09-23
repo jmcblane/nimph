@@ -1,6 +1,6 @@
 # Jacob McBlane <jacobmcblane@gmail.com>
 # silentmessengers.org
-# Version: 0.0.85
+# Version: 0.0.91
 #
 # Customize the variables on lines ~30 to fit your needs.
 #
@@ -238,7 +238,7 @@ proc main_loop(uri: string, port = 70) =
 
   case type_uri(uri):
   of '0':
-    let file = cache_uri(paramStr(1), port)
+    let file = cache_uri(uri, port)
     if file != "Nothing":
       echo readFile(file)
       let newuri = uri.split("/")[0..^2].join("/")
